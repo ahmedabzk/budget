@@ -7,11 +7,16 @@ use sqlx::PgPool;
 
 use tower_http::cors::{Any, CorsLayer};
 
+use crate::controllers::asserts_controller::{
+    create_asset, edit_asset, get_all_assets, get_one_asset, remove_asset,
+};
 use crate::controllers::expenses_controller::{
-    create_expense, edit_expense, get_all_expenses, get_one_expense,remove_expense
+    create_expense, edit_expense, get_all_expenses, get_one_expense, remove_expense,
 };
 use crate::controllers::income_controller::{create_income, edit, get_all, get_one, remove};
-use crate::controllers::savings_controller::{create_savings,get_all_savings,get_one_saving,remove_saving,edit_saving};
+use crate::controllers::savings_controller::{
+    create_savings, edit_saving, get_all_savings, get_one_saving, remove_saving,
+};
 
 // #[debug_handler(state = PgPool)]
 pub async fn create_routes(db: PgPool) -> Router<()> {
@@ -35,6 +40,11 @@ pub async fn create_routes(db: PgPool) -> Router<()> {
         .route("/api/v1/savings/one/:id", get(get_one_saving))
         .route("/api/v1/savings/edit/:id", post(edit_saving))
         .route("/api/v1/savings/remove/:id", get(remove_saving))
+        .route("/api/v1/asset/create", post(create_asset))
+        .route("/api/v1/asset/all", get(get_all_assets))
+        .route("/api/v1/asset/one/:id", get(get_one_asset))
+        .route("/api/v1/asset/edit/:id", post(edit_asset))
+        .route("/api/v1/asset/remove/:id", get(remove_asset))
         .layer(cors)
         .layer(Extension(db))
 }

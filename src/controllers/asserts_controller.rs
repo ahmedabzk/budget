@@ -1,33 +1,31 @@
 use axum::debug_handler;
-use axum::extract::Path;
-use axum::{Extension, Json};
+use axum::{extract::Path, Extension, Json};
 use serde_json::{json, Value};
 use sqlx::PgPool;
 
-use crate::models::savings::UpdateSavings;
 use crate::{
     errors::error::CustomError,
-    models::savings::{Savings, SavingsRs},
+    models::asserts::{Asset, AssetRs, UpdateAsset},
 };
 
 #[debug_handler(state = PgPool)]
-pub async fn create_savings(
+pub async fn create_asset(
     Extension(db): Extension<PgPool>,
-    Json(attributes): Json<Savings>,
+    Json(data): Json<Asset>,
 ) -> Result<Json<Value>, CustomError> {
-    sqlx::query("INSERT INTO savings (name, value, yld) VALUES ($1, $2, $3)")
-        .bind(attributes.name)
-        .bind(attributes.value)
-        .bind(attributes.yld)
+    sqlx::query("INSERT INTO assets (name,value,yld) VALUES ($1, $2, $3)")
+        .bind(data.name)
+        .bind(data.value)
+        .bind(data.yld)
         .execute(&db)
         .await?;
 
-    Ok(Json(json!("created savings successfully")))
+    Ok(Json(json!("assert created successfully")))
 }
 
 #[debug_handler(state = PgPool)]
-pub async fn get_all_savings(Extension(db): Extension<PgPool>) -> Result<Json<Value>, CustomError> {
-    let res = sqlx::query_as::<_, SavingsRs>("SELECT * FROM savings")
+pub async fn get_all_assets(Extension(db): Extension<PgPool>) -> Result<Json<Value>, CustomError> {
+    let res = sqlx::query_as::<_, AssetRs>("SELECT * FROM assets")
         .fetch_all(&db)
         .await?;
 
@@ -35,11 +33,11 @@ pub async fn get_all_savings(Extension(db): Extension<PgPool>) -> Result<Json<Va
 }
 
 #[debug_handler(state = PgPool)]
-pub async fn get_one_saving(
+pub async fn get_one_asset(
     Extension(db): Extension<PgPool>,
     Path(id): Path<i32>,
 ) -> Result<Json<Value>, CustomError> {
-    let res = sqlx::query_as::<_, SavingsRs>("SELECT * FROM savings WHERE id = $1")
+    let res = sqlx::query_as::<_, AssetRs>("SELECT * FROM assets WHERE id = $1")
         .bind(id)
         .fetch_one(&db)
         .await?;
@@ -48,11 +46,11 @@ pub async fn get_one_saving(
 }
 
 #[debug_handler(state = PgPool)]
-pub async fn remove_saving(
+pub async fn remove_asset(
     Extension(db): Extension<PgPool>,
     Path(id): Path<i32>,
 ) -> Result<Json<Value>, CustomError> {
-    sqlx::query("DELETE FROM savings WHERE id = $1")
+    sqlx::query("DELETE FROM assets WHERE id = $1")
         .bind(id)
         .execute(&db)
         .await?;
@@ -61,18 +59,18 @@ pub async fn remove_saving(
 }
 
 #[debug_handler(state = PgPool)]
-pub async fn edit_saving(
+pub async fn edit_asset(
     Extension(db): Extension<PgPool>,
     Path(id): Path<i32>,
-    Json(data): Json<UpdateSavings>,
+    Json(data): Json<UpdateAsset>,
 ) -> Result<Json<Value>, CustomError> {
-    let res = sqlx::query("SELECT * FROM savings WHERE id = $1")
+    let res = sqlx::query("SELECT * FROM assets WHERE id = $1")
         .bind(id)
         .fetch_optional(&db)
         .await?;
 
     if res.is_some() {
-        sqlx::query("UPDATE savings SET name=$1, value=$2, yld=$3 WHERE id = $4")
+        sqlx::query("UPDATE assets SET name=$1, value=$2, yld=$3 WHERE id=$4")
             .bind(data.name)
             .bind(data.value)
             .bind(data.yld)
