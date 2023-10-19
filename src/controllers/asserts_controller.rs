@@ -1,8 +1,10 @@
 use axum::debug_handler;
-use axum::{extract::Path, Extension, Json};
+use axum::extract::State;
+use axum::{extract::Path, Json};
 use serde_json::{json, Value};
 use sqlx::PgPool;
 
+use crate::app_state::AppState;
 use crate::{
     errors::error::CustomError,
     models::asserts::{Asset, AssetRs, UpdateAsset},
@@ -10,7 +12,7 @@ use crate::{
 
 #[debug_handler(state = PgPool)]
 pub async fn create_asset(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Json(data): Json<Asset>,
 ) -> Result<Json<Value>, CustomError> {
     sqlx::query("INSERT INTO assets (name,value,yld) VALUES ($1, $2, $3)")
@@ -24,7 +26,7 @@ pub async fn create_asset(
 }
 
 #[debug_handler(state = PgPool)]
-pub async fn get_all_assets(Extension(db): Extension<PgPool>) -> Result<Json<Value>, CustomError> {
+pub async fn get_all_assets(State(db): State<PgPool>) -> Result<Json<Value>, CustomError> {
     let res = sqlx::query_as::<_, AssetRs>("SELECT * FROM assets")
         .fetch_all(&db)
         .await?;
@@ -34,7 +36,7 @@ pub async fn get_all_assets(Extension(db): Extension<PgPool>) -> Result<Json<Val
 
 #[debug_handler(state = PgPool)]
 pub async fn get_one_asset(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Path(id): Path<i32>,
 ) -> Result<Json<Value>, CustomError> {
     let res = sqlx::query_as::<_, AssetRs>("SELECT * FROM assets WHERE id = $1")
@@ -47,7 +49,7 @@ pub async fn get_one_asset(
 
 #[debug_handler(state = PgPool)]
 pub async fn remove_asset(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Path(id): Path<i32>,
 ) -> Result<Json<Value>, CustomError> {
     sqlx::query("DELETE FROM assets WHERE id = $1")
@@ -58,9 +60,9 @@ pub async fn remove_asset(
     Ok(Json(json!("Deleted successfully")))
 }
 
-#[debug_handler(state = PgPool)]
+#[debug_handler(state = AppState)]
 pub async fn edit_asset(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Path(id): Path<i32>,
     Json(data): Json<UpdateAsset>,
 ) -> Result<Json<Value>, CustomError> {

@@ -1,5 +1,6 @@
-use budget::run_app;
+use budget::{app_state::AppState, run_app};
 use dotenvy::dotenv;
+use sqlx::postgres::PgPoolOptions;
 
 #[tokio::main]
 async fn main() {
@@ -8,5 +9,12 @@ async fn main() {
     let database_url = dotenvy::var("DATABASE_URL").unwrap();
     // println!("{:?}",database_url);
 
-    run_app(&database_url).await;
+    let conn = PgPoolOptions::new()
+        .connect(&database_url)
+        .await
+        .expect("failed to connect to database");
+
+    let app_state = AppState { db: conn };
+
+    run_app(app_state).await;
 }

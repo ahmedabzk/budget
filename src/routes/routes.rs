@@ -7,9 +7,6 @@ use sqlx::PgPool;
 
 use tower_http::cors::{Any, CorsLayer};
 
-use crate::controllers::asserts_controller::{
-    create_asset, edit_asset, get_all_assets, get_one_asset, remove_asset,
-};
 use crate::controllers::expenses_controller::{
     create_expense, edit_expense, get_all_expenses, get_one_expense, remove_expense,
 };
@@ -17,9 +14,16 @@ use crate::controllers::income_controller::{create_income, edit, get_all, get_on
 use crate::controllers::savings_controller::{
     create_savings, edit_saving, get_all_savings, get_one_saving, remove_saving,
 };
+use crate::controllers::google_oauth::{login,logout,oauth_return};
+use crate::{
+    app_state::AppState,
+    controllers::asserts_controller::{
+        create_asset, edit_asset, get_all_assets, get_one_asset, remove_asset,
+    },
+};
 
 // #[debug_handler(state = PgPool)]
-pub async fn create_routes(db: PgPool) -> Router<()> {
+pub async fn create_routes(state: AppState) -> Router<()> {
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST])
         .allow_origin(Any);
@@ -45,6 +49,8 @@ pub async fn create_routes(db: PgPool) -> Router<()> {
         .route("/api/v1/asset/one/:id", get(get_one_asset))
         .route("/api/v1/asset/edit/:id", post(edit_asset))
         .route("/api/v1/asset/remove/:id", get(remove_asset))
+        .route("/login", get(login))
+        .route("/oauth_return", get(oauth_return))
         .layer(cors)
-        .layer(Extension(db))
+        .with_state(state)
 }
