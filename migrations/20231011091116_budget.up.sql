@@ -41,15 +41,15 @@ CREATE TABLE
         last_updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
 
-CREATE TABLE
-    IF NOT EXISTS user_sessions(
-        id SERIAL PRIMARY KEY NOT NULL,
-        user_id INT NOT NULL UNIQUE,
-        session_token_p1 text NOT NULL,
-        session_token_p2 text NOT NULL,
-        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-    );
+-- CREATE TABLE
+--     IF NOT EXISTS user_sessions(
+--         id SERIAL PRIMARY KEY NOT NULL,
+--         user_id INT NOT NULL UNIQUE,
+--         session_token_p1 text NOT NULL,
+--         session_token_p2 text NOT NULL,
+--         expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+--         FOREIGN KEY (user_id) REFERENCES users(id)
+--     );
 
 CREATE TABLE "oauth2_state_storage" (
     id SERIAL NOT NULL PRIMARY KEY,
