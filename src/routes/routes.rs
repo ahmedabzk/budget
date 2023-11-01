@@ -1,10 +1,8 @@
 use axum::{
     http::Method,
     routing::{get, post},
-    Extension, Router,
+    Router,
 };
-use sqlx::PgPool;
-
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::controllers::expenses_controller::{
@@ -14,7 +12,7 @@ use crate::controllers::income_controller::{create_income, edit, get_all, get_on
 use crate::controllers::savings_controller::{
     create_savings, edit_saving, get_all_savings, get_one_saving, remove_saving,
 };
-use crate::controllers::google_oauth::{login,logout,oauth_return};
+use crate::controllers::total_income::{get_total_income, get_total_expenses, get_balance};
 use crate::{
     app_state::AppState,
     controllers::asserts_controller::{
@@ -28,29 +26,45 @@ pub async fn create_routes(state: AppState) -> Router<()> {
         .allow_methods([Method::GET, Method::POST])
         .allow_origin(Any);
 
+    let income_router = Router::new()
+            .route("/income/create", post(create_income))
+            .route("/income/remove/:id", get(remove))
+            .route("/income/edit/:id", post(edit))
+            .route("/income/all", get(get_all))
+            .route("/income/one/:id", get(get_one))
+            .route("/income/total", get(get_total_income))
+            .route("/income/balance", get(get_balance));
+
+    let expense_router = Router::new()
+        .route("/expense/create", post(create_expense))
+        .route("/expense/all", get(get_all_expenses))
+        .route("/expense/one/:id", get(get_one_expense))
+        .route("/expense/remove/:id", get(remove_expense))
+        .route("/expense/edit/:id", post(edit_expense))
+        .route("/expense/total", get(get_total_expenses));
+
+
+    let savings_router = Router::new()
+        .route("/savings/create", post(create_savings))
+        .route("/savings/all", get(get_all_savings))
+        .route("/savings/one/:id", get(get_one_saving))
+        .route("/savings/edit/:id", post(edit_saving))
+        .route("/savings/remove/:id", get(remove_saving));
+
+    let assets_router = Router::new()
+        .route("/asset/create", post(create_asset))
+        .route("/asset/all", get(get_all_assets))
+        .route("/asset/one/:id", get(get_one_asset))
+        .route("/asset/edit/:id", post(edit_asset))
+        .route("/asset/remove/:id", get(remove_asset));
+
+
     Router::new()
-        .route("/api/v1/income/create", post(create_income))
-        .route("/api/v1/income/remove/:id", get(remove))
-        .route("/api/v1/income/edit/:id", post(edit))
-        .route("/api/v1/income/all", get(get_all))
-        .route("/api/v1/income/one/:id", get(get_one))
-        .route("/api/v1/expense/create", post(create_expense))
-        .route("/api/v1/expense/all", get(get_all_expenses))
-        .route("/api/v1/expense/one/:id", get(get_one_expense))
-        .route("/api/v1/expense/remove/:id", get(remove_expense))
-        .route("/api/v1/expense/edit/:id", post(edit_expense))
-        .route("/api/v1/savings/create", post(create_savings))
-        .route("/api/v1/savings/all", get(get_all_savings))
-        .route("/api/v1/savings/one/:id", get(get_one_saving))
-        .route("/api/v1/savings/edit/:id", post(edit_saving))
-        .route("/api/v1/savings/remove/:id", get(remove_saving))
-        .route("/api/v1/asset/create", post(create_asset))
-        .route("/api/v1/asset/all", get(get_all_assets))
-        .route("/api/v1/asset/one/:id", get(get_one_asset))
-        .route("/api/v1/asset/edit/:id", post(edit_asset))
-        .route("/api/v1/asset/remove/:id", get(remove_asset))
-        .route("/login", get(login))
-        .route("/oauth_return", get(oauth_return))
+        .nest("/api/v1",income_router)
+        .nest("/api/v1", expense_router)
+        .nest("/api/v1", savings_router)
+        .nest("/api/v1", assets_router)
+
         .layer(cors)
         .with_state(state)
 }

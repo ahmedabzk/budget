@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use axum::response::IntoResponse;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -28,3 +29,11 @@ pub struct IncomeRs {
     pub amount: i64,
     pub done: bool,
 }
+
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct TotalAmount{
+    pub amount: i64,
+}
+

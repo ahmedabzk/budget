@@ -1,5 +1,5 @@
 use axum::debug_handler;
-use axum::{extract::Path, Extension, Json};
+use axum::{extract::{Path, State}, Json};
 use serde_json::{json, Value};
 use sqlx::PgPool;
 
@@ -11,7 +11,7 @@ use crate::{
 
 #[debug_handler(state = PgPool)]
 pub async fn create_expense(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Json(attributes): Json<Expense>,
 ) -> Result<Json<Value>, CustomError> {
     sqlx::query("INSERT INTO expenses (name,amount) VALUES ($1, $2)")
@@ -25,7 +25,7 @@ pub async fn create_expense(
 
 #[debug_handler(state = PgPool)]
 pub async fn get_all_expenses(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
 ) -> Result<Json<Value>, CustomError> {
     let res = sqlx::query_as::<_, ExpenseResponse>("SELECT * FROM expenses")
         .fetch_all(&db)
@@ -36,7 +36,7 @@ pub async fn get_all_expenses(
 
 #[debug_handler(state = PgPool)]
 pub async fn get_one_expense(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Path(id): Path<i32>,
 ) -> Result<Json<Value>, CustomError> {
     let res = sqlx::query_as::<_, ExpenseResponse>("SELECT * FROM expenses WHERE id = $1")
@@ -49,7 +49,7 @@ pub async fn get_one_expense(
 
 #[debug_handler(state = PgPool)]
 pub async fn remove_expense(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Path(id): Path<i32>,
 ) -> Result<Json<Value>, CustomError> {
     sqlx::query("DELETE FROM expenses WHERE id = $1")
@@ -61,7 +61,7 @@ pub async fn remove_expense(
 }
 
 pub async fn edit_expense(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Path(id): Path<i32>,
     Json(attributes): Json<UpdateExpense>,
 ) -> Result<String, CustomError> {

@@ -1,6 +1,6 @@
 use axum::debug_handler;
-use axum::extract::Path;
-use axum::{Extension, Json};
+use axum::extract::{State,Path};
+use axum::Json;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 
@@ -12,7 +12,7 @@ use crate::{
 
 #[debug_handler(state = PgPool)]
 pub async fn create_savings(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Json(attributes): Json<Savings>,
 ) -> Result<Json<Value>, CustomError> {
     sqlx::query("INSERT INTO savings (name, value, yld) VALUES ($1, $2, $3)")
@@ -26,7 +26,7 @@ pub async fn create_savings(
 }
 
 #[debug_handler(state = PgPool)]
-pub async fn get_all_savings(Extension(db): Extension<PgPool>) -> Result<Json<Value>, CustomError> {
+pub async fn get_all_savings(State(db): State<PgPool>) -> Result<Json<Value>, CustomError> {
     let res = sqlx::query_as::<_, SavingsRs>("SELECT * FROM savings")
         .fetch_all(&db)
         .await?;
@@ -36,7 +36,7 @@ pub async fn get_all_savings(Extension(db): Extension<PgPool>) -> Result<Json<Va
 
 #[debug_handler(state = PgPool)]
 pub async fn get_one_saving(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Path(id): Path<i32>,
 ) -> Result<Json<Value>, CustomError> {
     let res = sqlx::query_as::<_, SavingsRs>("SELECT * FROM savings WHERE id = $1")
@@ -49,7 +49,7 @@ pub async fn get_one_saving(
 
 #[debug_handler(state = PgPool)]
 pub async fn remove_saving(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Path(id): Path<i32>,
 ) -> Result<Json<Value>, CustomError> {
     sqlx::query("DELETE FROM savings WHERE id = $1")
@@ -62,7 +62,7 @@ pub async fn remove_saving(
 
 #[debug_handler(state = PgPool)]
 pub async fn edit_saving(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Path(id): Path<i32>,
     Json(data): Json<UpdateSavings>,
 ) -> Result<Json<Value>, CustomError> {

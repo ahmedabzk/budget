@@ -1,30 +1,43 @@
 use axum::debug_handler;
-use axum::extract::Path;
-use axum::{Extension, Json};
+use axum::extract::{Path, State};
+use axum::Json;
 use serde_json::{json, Value};
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 
 use crate::errors::error::CustomError;
 use crate::models::income::{Income, IncomeRs, UpdateIncome};
+use crate::app_state::AppState;
 
 #[debug_handler(state = PgPool)]
 pub async fn create_income(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Json(income): Json<Income>,
 ) -> Result<Json<Value>, CustomError> {
-    sqlx::query("INSERT INTO income (name, amount) VALUES ($1,$2)")
-        .bind(income.name)
-        .bind(income.amount)
-        .execute(&db)
+
+    let qry = sqlx::query("SELECT name FROM income WHERE name= $1")
+        .bind(&income.name)
+        .fetch_optional(&db)
         .await?;
 
-    Ok(Json(json!("added successfully")))
+    if qry.is_some(){
+        Ok(Json(json!("income already exists")))
+    }else{
+        sqlx::query("INSERT INTO income (name, amount) VALUES ($1,$2)")
+            .bind(income.name)
+            .bind(income.amount)
+            .execute(&db)
+            .await?;
+
+        Ok(Json(json!("added successfully")))
+    }
+
+   
 }
 
 #[debug_handler(state = PgPool)]
 pub async fn edit(
     Path(id): Path<i32>,
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Json(data): Json<UpdateIncome>,
 ) -> Result<String, CustomError> {
     let query = sqlx::query("SELECT * FROM income WHERE id=$1")
@@ -49,7 +62,7 @@ pub async fn edit(
 
 #[debug_handler(state = PgPool)]
 pub async fn remove(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Path(id): Path<i32>,
 ) -> Result<Json<Value>, CustomError> {
     sqlx::query("DELETE FROM income WHERE id = $1")
@@ -61,7 +74,7 @@ pub async fn remove(
 }
 
 #[debug_handler (state= PgPool)]
-pub async fn get_all(Extension(db): Extension<PgPool>) -> Result<Json<Value>, CustomError> {
+pub async fn get_all(State(db): State<PgPool>) -> Result<Json<Value>, CustomError> {
     let res = sqlx::query_as::<_, IncomeRs>("SELECT * FROM income")
         .fetch_all(&db)
         .await?;
@@ -74,7 +87,7 @@ pub async fn get_all(Extension(db): Extension<PgPool>) -> Result<Json<Value>, Cu
 
 #[debug_handler(state = PgPool)]
 pub async fn get_one(
-    Extension(db): Extension<PgPool>,
+    State(db): State<PgPool>,
     Path(id): Path<i32>,
 ) -> Result<Json<Value>, CustomError> {
     let res = sqlx::query_as::<_, IncomeRs>("SELECT * FROM income WHERE id = $1")
